@@ -41,7 +41,7 @@ export class DomainEvent<
     public readonly eventBody: Body,
     // ドメインイベントの発生時刻
     public readonly occurredOn: Date,
-    // ドメインイベントをパブリッシャーがパブリッシュした時刻
+    // ドメインイベントをパブリッシャーが発行した時刻
     public publishedAt: Date | null
   ) {}
 
@@ -370,7 +370,7 @@ container.register("ITransactionManager", {
 
 ## 4. Review アプリケーションサービスの修正
 
-次に、アプリケーションサービスを修正します。これまで、ドメインイベントのパブリッシュはサービス内で直接行っていましたが、Outbox パターンの実装に伴い、パブリッシュ処理を削除し、イベントストアへの保存処理を追加します。
+次に、アプリケーションサービスを修正します。これまで、ドメインイベントの発行はサービス内で直接行っていましたが、Outbox パターンの実装に伴い、発行処理を削除し、イベントストアへの保存処理を追加します。
 
 ### 4.1 AddReviewService の修正
 
@@ -576,14 +576,14 @@ export class DeleteReviewService {
 
 ## 5. メッセージリレーの実装
 
-メッセージリレーは、Outbox テーブルに保存されたイベントを実際にパブリッシュする役割を担うコンポーネントです。
+メッセージリレーは、Outbox テーブルに保存されたイベントを実際に発行する役割を担うコンポーネントです。
 
 ### 5.1 PendingEventsPublishService の実装
 
 このサービスは以下の重要な役割を担います。
 
 1. 未発行イベントの定期的な検出
-2. メッセージブローカーへの安全なパブリッシュ
+2. メッセージブローカーへの安全な発行
 3. イベント発行状態の管理
 
 それでは具体的な実装を見ていきましょう。`src/Application`配下に`EventStore`ディレクトリを作成します。さらにその中に`PendingEventsPublisher.ts`ファイルを作成し、以下のように実装します。
@@ -673,7 +673,7 @@ app.listen(port, () => {
   // サブスクライバーを登録
   container.resolve(CatalogServiceEventHandler).register();
 
-  // 未発行イベントのパブリッシュを開始
+  // 未発行イベントの発行を開始
   container.resolve(PendingEventsPublisher).start();
 });
 ```
@@ -716,7 +716,7 @@ $ curl -X POST -H "Content-Type: application/json" \
 新しいレビューが作成されました。レビューID: [ランダムID], 書籍ID: 9784814400737
 ```
 
-また、5 秒後にポーリングが実行され、イベントがパブリッシュされることも確認できます。
+また、5 秒後にポーリングが実行され、イベントが発行されることも確認できます。
 
 ## まとめ
 
