@@ -1,5 +1,8 @@
+import { Author } from "./Author/Author";
+import { BookId } from "./BookId/BookId";
 import { BookIdentity } from "./BookIdentity/BookIdentity";
 import { Price } from "./Price/Price";
+import { Title } from "./Title/Title";
 
 export class Book {
   constructor(
@@ -24,19 +27,19 @@ export class Book {
     return this._identity.equals(other._identity);
   }
 
-  get bookId() {
+  get bookId(): BookId {
     return this._identity.bookId;
   }
 
-  get title() {
+  get title(): Title {
     return this._identity.title;
   }
 
-  get author() {
+  get author(): Author {
     return this._identity.author;
   }
 
-  get price() {
+  get price(): Price {
     return this._price;
   }
 
