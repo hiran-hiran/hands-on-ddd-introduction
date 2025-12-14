@@ -138,7 +138,7 @@ export class Review extends Aggregate<ReviewDomainEvent> {
     return this._identity.equals(other._identity);
   }
 
-  get reviewId() {
+  get reviewId(): ReviewId {
     return this._identity.reviewId;
   }
 

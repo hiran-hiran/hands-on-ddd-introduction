@@ -2,6 +2,7 @@ import { BookId } from "../Book/BookId/BookId";
 import { Comment } from "./Comment/Comment";
 import { Name } from "./Name/Name";
 import { Rating } from "./Rating/Rating";
+import { ReviewId } from "./ReviewId/ReviewId";
 import { ReviewIdentity } from "./ReviewIdentity/ReviewIdentity";
 
 export class Review {
@@ -78,7 +79,7 @@ export class Review {
     return this._identity.equals(other._identity);
   }
 
-  get reviewId() {
+  get reviewId(): ReviewId {
     return this._identity.reviewId;
   }
 
