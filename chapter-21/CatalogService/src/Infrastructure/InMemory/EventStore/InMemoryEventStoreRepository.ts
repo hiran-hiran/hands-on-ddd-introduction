@@ -26,7 +26,7 @@ export class InMemoryEventStoreRepository implements IEventStoreRepository {
       (a, b) => a.occurredOn.getTime() - b.occurredOn.getTime()
     );
 
-    // 集約の再構築関数を使用して集約を再構築
+    // 再構築関数を使用して集約を生成
     return reconstruct(sortedEvents as T["domainEvents"]);
   }
 

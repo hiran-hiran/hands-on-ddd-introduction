@@ -49,7 +49,7 @@ export class SQLEventStoreRepository implements IEventStoreRepository {
         )
       );
 
-      // 集約の再構築関数を使用して集約を再構築
+      // 再構築関数を使用して集約を生成
       return reconstruct(domainEvents);
     });
   }
