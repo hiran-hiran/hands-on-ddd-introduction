@@ -17,7 +17,7 @@ export class SQLReviewRepository implements IReviewRepository {
     // コメントはnull/undefinedの場合があるので対応
     const comment = row.comment ? new Comment(row.comment) : undefined;
 
-    return Review.create(
+    return Review.reconstruct(
       new ReviewIdentity(new ReviewId(row.reviewId)),
       new BookId(row.bookId),
       new Name(row.name),

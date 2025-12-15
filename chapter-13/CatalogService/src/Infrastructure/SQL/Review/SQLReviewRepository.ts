@@ -1,13 +1,13 @@
-import { BookId } from "Domain/models/Book/BookId/BookId";
-import { Comment } from "Domain/models/Review/Comment/Comment";
-import { IReviewRepository } from "Domain/models/Review/IReviewRepository";
-import { Name } from "Domain/models/Review/Name/Name";
-import { Rating } from "Domain/models/Review/Rating/Rating";
-import { Review } from "Domain/models/Review/Review";
-import { ReviewId } from "Domain/models/Review/ReviewId/ReviewId";
-import { ReviewIdentity } from "Domain/models/Review/ReviewIdentity/ReviewIdentity";
+import { BookId } from 'Domain/models/Book/BookId/BookId';
+import { Comment } from 'Domain/models/Review/Comment/Comment';
+import { IReviewRepository } from 'Domain/models/Review/IReviewRepository';
+import { Name } from 'Domain/models/Review/Name/Name';
+import { Rating } from 'Domain/models/Review/Rating/Rating';
+import { Review } from 'Domain/models/Review/Review';
+import { ReviewId } from 'Domain/models/Review/ReviewId/ReviewId';
+import { ReviewIdentity } from 'Domain/models/Review/ReviewIdentity/ReviewIdentity';
 
-import { SQLClientManager } from "../SQLClientManager";
+import { SQLClientManager } from '../SQLClientManager';
 
 export class SQLReviewRepository implements IReviewRepository {
   constructor(private clientManager: SQLClientManager) {}
@@ -17,7 +17,7 @@ export class SQLReviewRepository implements IReviewRepository {
     // コメントはnull/undefinedの場合があるので対応
     const comment = row.comment ? new Comment(row.comment) : undefined;
 
-    return Review.create(
+    return Review.reconstruct(
       new ReviewIdentity(new ReviewId(row.reviewId)),
       new BookId(row.bookId),
       new Name(row.name),
