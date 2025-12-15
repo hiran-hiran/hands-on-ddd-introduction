@@ -5,7 +5,7 @@ import { MockTransactionManager } from 'Application/shared/MockTransactionManage
 import { InMemoryBookRepository } from 'Infrastructure/InMemory/Book/InMemoryBookRepository';
 import {
     InMemoryEventStoreRepository
-} from 'Infrastructure/InMemory/InMemory/InMemoryEventStoreRepository';
+} from 'Infrastructure/InMemory/EventStore/InMemoryEventStoreRepository';
 import { InMemoryReviewRepository } from 'Infrastructure/InMemory/Review/InMemoryReviewRepository';
 
 // DomainEvent

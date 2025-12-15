@@ -4,7 +4,7 @@
 
 ## 実装の流れ
 
-実装は以下の順序で進めていきます。
+実装の順序は以下のとおりです。
 
 1. DomainEvent クラスの拡張
 2. Event テーブルの設計と作成
@@ -15,7 +15,7 @@
 
 ## 1. DomainEvent クラスの拡張
 
-Outbox パターンを実装するにあたり、まず DomainEvent クラスにイベントの発行状態を管理する機能を追加します。
+Outbox パターンの実装にあたり、まず DomainEvent クラスにイベントの発行状態を管理する機能を追加します。
 
 ### 1.1 publishedAt フィールドと publish() メソッドの追加
 
@@ -95,7 +95,7 @@ export class DomainEvent<
 
 ## 2. Event テーブルの設計と作成
 
-ドメインイベントを永続化するための Event テーブル(Outbox テーブル) を作成します。このテーブルは DomainEvent クラスの属性をそのまま保存できる構造とします。
+ドメインイベントを永続化するための Event テーブル(Outbox テーブル) を作成します。Event テーブルは DomainEvent クラスの属性をそのまま保存できる構造とします。
 
 ### 2.1 SQL 定義の作成
 
@@ -128,7 +128,7 @@ CREATE INDEX IF NOT EXISTS "Event_unpublished_occurredOn_idx" ON "Event"("publis
 $ npx ts-node src/Infrastructure/SQL/migrations/runMigrations.ts create_event_table.sql
 ```
 
-これにより、`Event` テーブルが作成されました。
+マイグレーションにより、`Event` テーブルが作成されました。
 
 ## 3. イベントストアの実装
 
@@ -146,7 +146,7 @@ export interface IEventStoreRepository {
   // 未発行のイベントを取得
   findPendingEvents(): Promise<DomainEvent[]>;
   // 集約からイベントを保存
-  store(aggregate: Aggregate<DomainEvent>): Promise<void>;
+  store(aggregate: Aggregate): Promise<void>;
   // イベントを発行済みとしてマーク
   markAsPublished(event: DomainEvent): Promise<void>;
 }
@@ -154,7 +154,7 @@ export interface IEventStoreRepository {
 
 ### 3.2 SQL 実装
 
-このインターフェイスの実装を `node-postgres` を使って行います。`src/Infrastructure/SQL`配下に`EventStore`ディレクトリを作成します。次に、`SQLEventStoreRepository.ts`ファイルを作成し、以下のように実装します。
+IEventStoreRepository の実装を `node-postgres` を使って行います。`src/Infrastructure/SQL`配下に`EventStore`ディレクトリを作成します。次に、`SQLEventStoreRepository.ts`ファイルを作成し、以下のように実装します。
 
 ```typescript:CatalogService/src/Infrastructure/SQL/EventStore/SQLEventStoreRepository.ts
 import { injectable } from 'tsyringe';
@@ -341,7 +341,7 @@ import { MockTransactionManager } from 'Application/shared/MockTransactionManage
 import { InMemoryBookRepository } from 'Infrastructure/InMemory/Book/InMemoryBookRepository';
 import {
     InMemoryEventStoreRepository
-} from 'Infrastructure/InMemory/InMemory/InMemoryEventStoreRepository';
+} from 'Infrastructure/InMemory/EventStore/InMemoryEventStoreRepository';
 import { InMemoryReviewRepository } from 'Infrastructure/InMemory/Review/InMemoryReviewRepository';
 
 // DomainEvent
@@ -578,7 +578,7 @@ export class DeleteReviewService {
 
 メッセージリレーは、Outbox テーブルに保存されたイベントを実際に発行する役割を担うコンポーネントです。
 
-### 5.1 PendingEventsPublishService の実装
+### 5.1 PendingEventsPublisher の実装
 
 このサービスは以下の重要な役割を担います。
 
@@ -586,7 +586,7 @@ export class DeleteReviewService {
 2. メッセージブローカーへの安全な発行
 3. イベント発行状態の管理
 
-それでは具体的な実装を見ていきましょう。`src/Application`配下に`EventStore`ディレクトリを作成します。さらにその中に`PendingEventsPublisher.ts`ファイルを作成し、以下のように実装します。
+具体的な実装を見ていきましょう。`src/Application`配下に`EventStore`ディレクトリを作成します。さらにその中に`PendingEventsPublisher.ts`ファイルを作成し、以下のように実装します。
 
 ```typescript:CatalogService/src/Application/EventStore/PendingEventsPublisher.ts
 import { inject, injectable } from 'tsyringe';
@@ -660,7 +660,7 @@ export class PendingEventsPublisher {
 
 ### 5.2 サービスの起動
 
-実装した`PendingEventsPublishService`をアプリケーション起動時に開始するように設定します。`src/Presentation/Express/index.ts`ファイルを以下のように修正します。
+実装した`PendingEventsPublisher`をアプリケーション起動時に開始するように設定します。`src/Presentation/Express/index.ts`ファイルを以下のように修正します。
 
 ```typescript:CatalogService/src/Presentation/Express/index.ts
 import {

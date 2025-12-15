@@ -8,7 +8,7 @@ import { Review } from "Domain/models/Review/Review";
 import { ReviewId } from "Domain/models/Review/ReviewId/ReviewId";
 import { ReviewIdentity } from "Domain/models/Review/ReviewIdentity/ReviewIdentity";
 import { ReviewDomainEvent } from "Domain/shared/DomainEvent/Review/ReviewDomainEventFactory";
-import { InMemoryEventStoreRepository } from "Infrastructure/InMemory/InMemory/InMemoryEventStoreRepository";
+import { InMemoryEventStoreRepository } from "Infrastructure/InMemory/EventStore/InMemoryEventStoreRepository";
 
 import {
   DeleteReviewCommand,

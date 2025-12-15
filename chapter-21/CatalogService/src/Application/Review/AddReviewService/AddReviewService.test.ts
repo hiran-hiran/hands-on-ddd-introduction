@@ -9,7 +9,7 @@ import { Title } from "Domain/models/Book/Title/Title";
 import { Review } from "Domain/models/Review/Review";
 import { ReviewDomainEvent } from "Domain/shared/DomainEvent/Review/ReviewDomainEventFactory";
 import { InMemoryBookRepository } from "Infrastructure/InMemory/Book/InMemoryBookRepository";
-import { InMemoryEventStoreRepository } from "Infrastructure/InMemory/InMemory/InMemoryEventStoreRepository";
+import { InMemoryEventStoreRepository } from "Infrastructure/InMemory/EventStore/InMemoryEventStoreRepository";
 
 import { AddReviewDTO } from "./AddReviewDTO";
 import { AddReviewCommand, AddReviewService } from "./AddReviewService";
