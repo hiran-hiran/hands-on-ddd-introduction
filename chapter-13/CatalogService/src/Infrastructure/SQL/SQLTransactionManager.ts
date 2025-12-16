@@ -1,32 +1,37 @@
-import { ITransactionManager } from "Application/shared/ITransactionManager";
+import { ITransactionManager } from 'Application/shared/ITransactionManager';
 
-import pool from "./db";
-import { SQLClientManager } from "./SQLClientManager";
+import { SQLClientManager } from './SQLClientManager';
 
 export class SQLTransactionManager implements ITransactionManager {
-  constructor(private clientManager: SQLClientManager) {}
+  constructor(private readonly clientManager: SQLClientManager) {}
 
   async begin<T>(callback: () => Promise<T>): Promise<T> {
-    const client = await pool.connect();
+    const existingClient = this.clientManager.getClient();
+    if (existingClient) {
+      return await callback();
+    }
 
+    const client = await this.clientManager.getConnection();
     try {
-      // トランザクション開始
-      await client.query(`BEGIN TRANSACTION`);
-      // トランザクション用のクライアントをセット
-      this.clientManager.setClient(client);
+      // クライアントをコンテキストにセットしてコールバックを実行
+      return await this.clientManager.runWithClient(client, async () => {
+        try {
+          // トランザクション開始
+          await client.query("BEGIN");
 
-      // コールバックを実行
-      const result = await callback();
+          const result = await callback();
 
-      // トランザクションをコミット
-      await client.query("COMMIT");
-      return result;
-    } catch (error) {
-      // エラー時はロールバック
-      await client.query("ROLLBACK");
-      throw error;
+          // トランザクションをコミット
+          await client.query("COMMIT");
+          return result;
+        } catch (error) {
+          // エラー時はロールバック
+          await client.query("ROLLBACK");
+          throw error;
+        }
+      });
     } finally {
-      // クライアントをリリース
+      // スコープを抜けたら確実にリリース
       client.release();
     }
   }
