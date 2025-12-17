@@ -1,4 +1,4 @@
-import express, { json } from "express";
+import express, { json, Response } from "express";
 
 import {
   RegisterBookCommand,
@@ -28,7 +28,6 @@ import { SQLTransactionManager } from "Infrastructure/SQL/SQLTransactionManager"
 const app = express();
 const port = 3000;
 
-// JSON形式のリクエストボディを正しく解析するために必要
 app.use(json());
 
 const clientManager = new SQLClientManager();
@@ -36,22 +35,27 @@ const transactionManager = new SQLTransactionManager(clientManager);
 const bookRepository = new SQLBookRepository(clientManager);
 const reviewRepository = new SQLReviewRepository(clientManager);
 
+const isStr = (v: any): v is string => typeof v === "string" && v.length > 0;
+const isNum = (v: any): v is number => typeof v === "number" && !isNaN(v);
+const invalid = (res: Response) =>
+  res.status(400).json({ ok: false, message: "Invalid request" });
+
 // 中核ユースケース: レビュー内容から推薦書籍を取得
 app.get("/book/:isbn/recommendations", async (req, res) => {
   try {
-    const getRecommendedBooksService = new GetRecommendedBooksService(
-      reviewRepository
-    );
+    const { isbn } = req.params;
+    const { maxCount } = req.query;
 
+    if (!isStr(isbn)) return invalid(res);
+    if (maxCount && isNaN(Number(maxCount))) return invalid(res);
+
+    const service = new GetRecommendedBooksService(reviewRepository);
     const command: GetRecommendedBooksCommand = {
-      bookId: req.params.isbn,
-      maxCount: req.query.maxCount
-        ? parseInt(req.query.maxCount as string)
-        : undefined,
+      bookId: isbn,
+      maxCount: maxCount ? Number(maxCount) : undefined,
     };
 
-    const recommendedBooks = await getRecommendedBooksService.execute(command);
-
+    const recommendedBooks = await service.execute(command);
     res.status(200).json({ ok: true, recommendedBooks });
   } catch {
     res.status(500).json({ ok: false });
@@ -61,20 +65,15 @@ app.get("/book/:isbn/recommendations", async (req, res) => {
 // 書籍登録
 app.post("/book", async (req, res) => {
   try {
-    const requestBody = req.body as {
-      isbn: string;
-      title: string;
-      author: string;
-      price: number;
-    };
+    const { isbn, title, author, price } = req.body;
 
-    const registerBookService = new RegisterBookService(
-      bookRepository,
-      transactionManager
-    );
+    if (!isStr(isbn) || !isStr(title) || !isStr(author) || !isNum(price)) {
+      return invalid(res);
+    }
 
-    const registerBookCommand: RegisterBookCommand = requestBody;
-    const book = await registerBookService.execute(registerBookCommand);
+    const service = new RegisterBookService(bookRepository, transactionManager);
+    const command: RegisterBookCommand = { isbn, title, author, price };
+    const book = await service.execute(command);
 
     res.status(201).json({ ok: true, book });
   } catch {
@@ -85,23 +84,19 @@ app.post("/book", async (req, res) => {
 // レビュー投稿
 app.post("/book/:isbn/review", async (req, res) => {
   try {
-    const requestBody = req.body as {
-      name: string;
-      rating: number;
-      comment?: string;
-    };
+    const { isbn } = req.params;
+    const { name, rating, comment } = req.body;
 
-    const addReviewService = new AddReviewService(
+    if (!isStr(isbn) || !isStr(name) || !isNum(rating)) return invalid(res);
+    if (comment && !isStr(comment)) return invalid(res);
+
+    const service = new AddReviewService(
       reviewRepository,
       bookRepository,
       transactionManager
     );
-
-    const addReviewCommand: AddReviewCommand = {
-      bookId: req.params.isbn,
-      ...requestBody,
-    };
-    const review = await addReviewService.execute(addReviewCommand);
+    const command: AddReviewCommand = { bookId: isbn, name, rating, comment };
+    const review = await service.execute(command);
 
     res.status(201).json({ ok: true, review });
   } catch {
@@ -112,22 +107,17 @@ app.post("/book/:isbn/review", async (req, res) => {
 // レビュー編集
 app.put("/review/:reviewId", async (req, res) => {
   try {
-    const requestBody = req.body as {
-      name?: string;
-      rating?: number;
-      comment?: string;
-    };
+    const { reviewId } = req.params;
+    const { name, rating, comment } = req.body;
 
-    const editReviewService = new EditReviewService(
-      reviewRepository,
-      transactionManager
-    );
+    if (!isStr(reviewId)) return invalid(res);
+    if (name && !isStr(name)) return invalid(res);
+    if (rating && !isNum(rating)) return invalid(res);
+    if (comment && !isStr(comment)) return invalid(res);
 
-    const editReviewCommand: EditReviewCommand = {
-      reviewId: req.params.reviewId,
-      ...requestBody,
-    };
-    const review = await editReviewService.execute(editReviewCommand);
+    const service = new EditReviewService(reviewRepository, transactionManager);
+    const command: EditReviewCommand = { reviewId, name, rating, comment };
+    const review = await service.execute(command);
 
     res.status(200).json({ ok: true, review });
   } catch {
@@ -138,15 +128,15 @@ app.put("/review/:reviewId", async (req, res) => {
 // レビュー削除
 app.delete("/review/:reviewId", async (req, res) => {
   try {
-    const deleteReviewService = new DeleteReviewService(
+    const { reviewId } = req.params;
+    if (!isStr(reviewId)) return invalid(res);
+
+    const service = new DeleteReviewService(
       reviewRepository,
       transactionManager
     );
-
-    const deleteReviewCommand: DeleteReviewCommand = {
-      reviewId: req.params.reviewId,
-    };
-    await deleteReviewService.execute(deleteReviewCommand);
+    const command: DeleteReviewCommand = { reviewId };
+    await service.execute(command);
 
     res.status(204).end();
   } catch {

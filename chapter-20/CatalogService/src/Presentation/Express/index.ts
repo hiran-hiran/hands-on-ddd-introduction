@@ -1,31 +1,32 @@
-import express, { json } from 'express';
+import express, { json, Response } from "express";
 // Reflectのポリフィルをcontainer.resolveされる前に一度読み込む必要がある
-import 'reflect-metadata';
-import { container } from 'tsyringe';
+import "reflect-metadata";
+import { container } from "tsyringe";
 
 import {
-    RegisterBookCommand, RegisterBookService
-} from 'Application/Book/RegisterBookService/RegisterBookService';
+  RegisterBookCommand,
+  RegisterBookService,
+} from "Application/Book/RegisterBookService/RegisterBookService";
+import { CatalogServiceEventHandler } from "Application/DomainEventHandlers/CatalogServiceEventHandler";
+import { PendingEventsPublisher } from "Application/EventStore/PendingEventsPublisher/PendingEventsPublisher";
 import {
-    CatalogServiceEventHandler
-} from 'Application/DomainEventHandlers/CatalogServiceEventHandler';
+  AddReviewCommand,
+  AddReviewService,
+} from "Application/Review/AddReviewService/AddReviewService";
 import {
-    PendingEventsPublisher
-} from 'Application/EventStore/PendingEventsPublisher/PendingEventsPublisher';
+  DeleteReviewCommand,
+  DeleteReviewService,
+} from "Application/Review/DeleteReviewService/DeleteReviewService";
 import {
-    AddReviewCommand, AddReviewService
-} from 'Application/Review/AddReviewService/AddReviewService';
+  EditReviewCommand,
+  EditReviewService,
+} from "Application/Review/EditReviewService/EditReviewService";
 import {
-    DeleteReviewCommand, DeleteReviewService
-} from 'Application/Review/DeleteReviewService/DeleteReviewService';
-import {
-    EditReviewCommand, EditReviewService
-} from 'Application/Review/EditReviewService/EditReviewService';
-import {
-    GetRecommendedBooksCommand, GetRecommendedBooksService
-} from 'Application/Review/GetRecommendedBooksService/GetRecommendedBooksService';
+  GetRecommendedBooksCommand,
+  GetRecommendedBooksService,
+} from "Application/Review/GetRecommendedBooksService/GetRecommendedBooksService";
 
-import '../../Program';
+import "../../Program";
 
 const app = express();
 const port = 3000;
@@ -33,18 +34,27 @@ const port = 3000;
 // JSON形式のリクエストボディを正しく解析するために必要
 app.use(json());
 
+const isStr = (v: any): v is string => typeof v === "string" && v.length > 0;
+const isNum = (v: any): v is number => typeof v === "number" && !isNaN(v);
+const invalid = (res: Response) =>
+  res.status(400).json({ ok: false, message: "Invalid request" });
+
 // 中核ユースケース: レビュー内容から推薦書籍を取得
 app.get("/book/:isbn/recommendations", async (req, res) => {
   try {
+    const { isbn } = req.params;
+    const { maxCount } = req.query;
+
+    if (!isStr(isbn)) return invalid(res);
+    if (maxCount && isNaN(Number(maxCount))) return invalid(res);
+
     const getRecommendedBooksService = container.resolve(
       GetRecommendedBooksService
     );
 
     const command: GetRecommendedBooksCommand = {
-      bookId: req.params.isbn,
-      maxCount: req.query.maxCount
-        ? parseInt(req.query.maxCount as string)
-        : undefined,
+      bookId: isbn,
+      maxCount: maxCount ? Number(maxCount) : undefined,
     };
 
     const recommendedBooks = await getRecommendedBooksService.execute(command);
@@ -58,16 +68,20 @@ app.get("/book/:isbn/recommendations", async (req, res) => {
 // 書籍登録
 app.post("/book", async (req, res) => {
   try {
-    const requestBody = req.body as {
-      isbn: string;
-      title: string;
-      author: string;
-      price: number;
-    };
+    const { isbn, title, author, price } = req.body;
+
+    if (!isStr(isbn) || !isStr(title) || !isStr(author) || !isNum(price)) {
+      return invalid(res);
+    }
 
     const registerBookService = container.resolve(RegisterBookService);
 
-    const registerBookCommand: RegisterBookCommand = requestBody;
+    const registerBookCommand: RegisterBookCommand = {
+      isbn,
+      title,
+      author,
+      price,
+    };
     const book = await registerBookService.execute(registerBookCommand);
 
     res.status(201).json({ ok: true, book });
@@ -79,17 +93,19 @@ app.post("/book", async (req, res) => {
 // レビュー投稿
 app.post("/book/:isbn/review", async (req, res) => {
   try {
-    const requestBody = req.body as {
-      name: string;
-      rating: number;
-      comment?: string;
-    };
+    const { isbn } = req.params;
+    const { name, rating, comment } = req.body;
+
+    if (!isStr(isbn) || !isStr(name) || !isNum(rating)) return invalid(res);
+    if (comment && !isStr(comment)) return invalid(res);
 
     const addReviewService = container.resolve(AddReviewService);
 
     const addReviewCommand: AddReviewCommand = {
-      bookId: req.params.isbn,
-      ...requestBody,
+      bookId: isbn,
+      name,
+      rating,
+      comment,
     };
     const review = await addReviewService.execute(addReviewCommand);
 
@@ -102,17 +118,21 @@ app.post("/book/:isbn/review", async (req, res) => {
 // レビュー編集
 app.put("/review/:reviewId", async (req, res) => {
   try {
-    const requestBody = req.body as {
-      name?: string;
-      rating?: number;
-      comment?: string;
-    };
+    const { reviewId } = req.params;
+    const { name, rating, comment } = req.body;
+
+    if (!isStr(reviewId)) return invalid(res);
+    if (name && !isStr(name)) return invalid(res);
+    if (rating && !isNum(rating)) return invalid(res);
+    if (comment && !isStr(comment)) return invalid(res);
 
     const editReviewService = container.resolve(EditReviewService);
 
     const editReviewCommand: EditReviewCommand = {
-      reviewId: req.params.reviewId,
-      ...requestBody,
+      reviewId,
+      name,
+      rating,
+      comment,
     };
     const review = await editReviewService.execute(editReviewCommand);
 
@@ -125,10 +145,14 @@ app.put("/review/:reviewId", async (req, res) => {
 // レビュー削除
 app.delete("/review/:reviewId", async (req, res) => {
   try {
+    const { reviewId } = req.params;
+
+    if (!isStr(reviewId)) return invalid(res);
+
     const deleteReviewService = container.resolve(DeleteReviewService);
 
     const deleteReviewCommand: DeleteReviewCommand = {
-      reviewId: req.params.reviewId,
+      reviewId,
     };
     await deleteReviewService.execute(deleteReviewCommand);
 
@@ -142,7 +166,6 @@ app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
   // サブスクライバーを登録
   container.resolve(CatalogServiceEventHandler).register();
-
-  // 未発行イベントのパブリッシュを開始
+  // 未発行イベントの発行を開始
   container.resolve(PendingEventsPublisher).start();
 });

@@ -674,20 +674,19 @@ export class PendingEventsPublisher {
 
 実装した`PendingEventsPublisher`をアプリケーション起動時に開始するように設定します。`src/Presentation/Express/index.ts`ファイルを以下のように修正します。
 
-```typescript:CatalogService/src/Presentation/Express/index.ts
-import {
-    PendingEventsPublisher
-} from 'Application/EventStore/PendingEventsPublisher/PendingEventsPublisher';
-// 既存のコード...
+```diff typescript:CatalogService/src/Presentation/Express/index.ts
++ import {
++     PendingEventsPublisher
++ } from 'Application/EventStore/PendingEventsPublisher/PendingEventsPublisher';
+  // 既存のコード...
 
-app.listen(port, () => {
-  console.log(`CatalogService listening on port ${port}`);
-  // サブスクライバーを登録
-  container.resolve(CatalogServiceEventHandler).register();
-
-  // 未発行イベントの発行を開始
-  container.resolve(PendingEventsPublisher).start();
-});
+  app.listen(port, () => {
+    console.log(`CatalogService listening on port ${port}`);
+    // サブスクライバーを登録
+    container.resolve(CatalogServiceEventHandler).register();
++   // 未発行イベントの発行を開始
++   container.resolve(PendingEventsPublisher).start();
+  });
 ```
 
 > [!NOTE] > **ポーリング間隔の調整について**
