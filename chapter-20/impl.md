@@ -589,70 +589,82 @@ export class DeleteReviewService {
 具体的な実装を見ていきましょう。`src/Application`配下に`EventStore`ディレクトリを作成します。さらにその中に`PendingEventsPublisher.ts`ファイルを作成し、以下のように実装します。
 
 ```typescript:CatalogService/src/Application/EventStore/PendingEventsPublisher.ts
-import { inject, injectable } from 'tsyringe';
+import { inject, injectable } from "tsyringe";
 
-import { IEventStoreRepository } from 'Domain/shared/DomainEvent/IEventStoreRepository';
+import { IEventStoreRepository } from "Domain/shared/DomainEvent/IEventStoreRepository";
 
-import { IDomainEventPublisher } from '../../shared/DomainEvent/IDomainEventPublisher';
-import { ITransactionManager } from '../../shared/ITransactionManager';
+import { IDomainEventPublisher } from "../../shared/DomainEvent/IDomainEventPublisher";
 
 @injectable()
 export class PendingEventsPublisher {
-  private intervalId: NodeJS.Timeout | null = null;
+  private isRunning = false;
+  private timeoutId: NodeJS.Timeout | null = null;
   private readonly POLLING_INTERVAL_MS = 5000;
 
   constructor(
     @inject("IEventStoreRepository")
     private eventStoreRepository: IEventStoreRepository,
     @inject("IDomainEventPublisher")
-    private domainEventPublisher: IDomainEventPublisher,
-    @inject("ITransactionManager")
-    private transactionManager: ITransactionManager
+    private domainEventPublisher: IDomainEventPublisher
   ) {}
 
   /**
    * 定期実行を開始
    */
   start(): void {
-    if (this.intervalId !== null) {
-      return;
-    }
-
-    this.intervalId = setInterval(() => {
-      this.publishPendingEvents();
-    }, this.POLLING_INTERVAL_MS);
+    if (this.isRunning) return;
+    this.isRunning = true;
+    this.scheduleNext();
   }
 
   /**
    * 定期実行を停止
    */
   stop(): void {
-    if (this.intervalId !== null) {
-      clearInterval(this.intervalId);
-      this.intervalId = null;
+    this.isRunning = false;
+    if (this.timeoutId) {
+      clearTimeout(this.timeoutId);
+      this.timeoutId = null;
     }
+  }
+
+  /**
+   * 次の実行をスケジュール
+   */
+  private scheduleNext(): void {
+    if (!this.isRunning) return;
+
+    this.timeoutId = setTimeout(() => {
+      this.publishPendingEvents().finally(() => {
+        this.scheduleNext();
+      });
+    }, this.POLLING_INTERVAL_MS);
   }
 
   /**
    * 未発行イベントを発行
    */
   private async publishPendingEvents(): Promise<void> {
-    const pendingEvents = await this.eventStoreRepository.findPendingEvents();
+    try {
+      const pendingEvents = await this.eventStoreRepository.findPendingEvents();
+      if (pendingEvents.length === 0) return;
 
-    for (const event of pendingEvents) {
-      try {
-        this.domainEventPublisher.publish(event);
+      for (const event of pendingEvents) {
+        try {
+          this.domainEventPublisher.publish(event);
 
-        await this.transactionManager.begin(async () => {
           event.publish();
           await this.eventStoreRepository.markAsPublished(event);
-        });
-      } catch {
-        // 発行に失敗した場合 (ネットワークエラー、ブローカーダウン等)ループを即座に中断し、後続のイベントを処理しない。
-        // これにより、イベントの順序性が保証される。
-        // 次のインターバルで、この失敗したイベントから再試行される。
-        break;
+        } catch (error) {
+          console.error(`Failed to publish event ${event.eventId}:`, error);
+          // 発行に失敗した場合 (ネットワークエラー、ブローカーダウン等)ループを即座に中断し、後続のイベントを処理しない。
+          // これにより、イベントの順序性が保証される。
+          // 次のインターバルで、この失敗したイベントから再試行される。
+          break;
+        }
       }
+    } catch (error) {
+      console.error("Error fetching pending events:", error);
     }
   }
 }
