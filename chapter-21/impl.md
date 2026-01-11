@@ -1004,7 +1004,7 @@ import { Title } from "Domain/models/Book/Title/Title";
 import { Review } from "Domain/models/Review/Review";
 import { ReviewDomainEvent } from "Domain/shared/DomainEvent/Review/ReviewDomainEventFactory";
 import { InMemoryBookRepository } from "Infrastructure/InMemory/Book/InMemoryBookRepository";
-import { InMemoryEventStoreRepository } from "Infrastructure/InMemory/InMemory/InMemoryEventStoreRepository";
+import { InMemoryEventStoreRepository } from "Infrastructure/InMemory/EventStore/InMemoryEventStoreRepository";
 
 import { AddReviewDTO } from "./AddReviewDTO";
 import { AddReviewCommand, AddReviewService } from "./AddReviewService";
@@ -1101,7 +1101,7 @@ import { Review } from "Domain/models/Review/Review";
 import { ReviewId } from "Domain/models/Review/ReviewId/ReviewId";
 import { ReviewIdentity } from "Domain/models/Review/ReviewIdentity/ReviewIdentity";
 import { ReviewDomainEvent } from "Domain/shared/DomainEvent/Review/ReviewDomainEventFactory";
-import { InMemoryEventStoreRepository } from "Infrastructure/InMemory/InMemory/InMemoryEventStoreRepository";
+import { InMemoryEventStoreRepository } from "Infrastructure/InMemory/EventStore/InMemoryEventStoreRepository";
 
 import { EditReviewCommand, EditReviewService } from "./EditReviewService";
 
@@ -1195,7 +1195,7 @@ import { Review } from "Domain/models/Review/Review";
 import { ReviewId } from "Domain/models/Review/ReviewId/ReviewId";
 import { ReviewIdentity } from "Domain/models/Review/ReviewIdentity/ReviewIdentity";
 import { ReviewDomainEvent } from "Domain/shared/DomainEvent/Review/ReviewDomainEventFactory";
-import { InMemoryEventStoreRepository } from "Infrastructure/InMemory/InMemory/InMemoryEventStoreRepository";
+import { InMemoryEventStoreRepository } from "Infrastructure/InMemory/EventStore/InMemoryEventStoreRepository";
 
 import {
   DeleteReviewCommand,
