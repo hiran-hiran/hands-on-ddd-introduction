@@ -8,7 +8,7 @@ import {
   RegisterBookService,
 } from "Application/Book/RegisterBookService/RegisterBookService";
 import { CatalogServiceEventHandler } from "Application/DomainEventHandlers/CatalogServiceEventHandler";
-import { PendingEventsPublisher } from "Application/EventStore/PendingEventsPublisher/PendingEventsPublisher";
+import { PendingEventsPublisher } from "Application/EventStore/PendingEventsPublisher";
 import {
   AddReviewCommand,
   AddReviewService,

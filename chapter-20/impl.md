@@ -593,7 +593,7 @@ import { inject, injectable } from "tsyringe";
 
 import { IEventStoreRepository } from "Domain/shared/DomainEvent/IEventStoreRepository";
 
-import { IDomainEventPublisher } from "../../shared/DomainEvent/IDomainEventPublisher";
+import { IDomainEventPublisher } from "../shared/DomainEvent/IDomainEventPublisher";
 
 @injectable()
 export class PendingEventsPublisher {
@@ -675,9 +675,7 @@ export class PendingEventsPublisher {
 実装した`PendingEventsPublisher`をアプリケーション起動時に開始するように設定します。`src/Presentation/Express/index.ts`ファイルを以下のように修正します。
 
 ```diff typescript:CatalogService/src/Presentation/Express/index.ts
-+ import {
-+     PendingEventsPublisher
-+ } from 'Application/EventStore/PendingEventsPublisher/PendingEventsPublisher';
++ import { PendingEventsPublisher } from "Application/EventStore/PendingEventsPublisher";
   // 既存のコード...
 
   app.listen(port, () => {
@@ -729,7 +727,7 @@ $ curl -X POST -H "Content-Type: application/json" \
 
 また、5 秒後にポーリングが実行され、イベントが発行されることも確認できます。
 
-## まとめ z
+## まとめ
 
 以上で Outbox パターンの実装は完了です。この実装により、以下のような利点が得られました。
 

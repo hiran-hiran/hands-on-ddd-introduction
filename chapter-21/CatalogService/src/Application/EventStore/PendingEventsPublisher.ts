@@ -2,7 +2,7 @@ import { inject, injectable } from "tsyringe";
 
 import { IEventStoreRepository } from "Domain/shared/DomainEvent/IEventStoreRepository";
 
-import { IDomainEventPublisher } from "../../shared/DomainEvent/IDomainEventPublisher";
+import { IDomainEventPublisher } from "../shared/DomainEvent/IDomainEventPublisher";
 
 @injectable()
 export class PendingEventsPublisher {
