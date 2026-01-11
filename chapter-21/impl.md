@@ -817,7 +817,6 @@ export class InMemoryEventStoreRepository implements IEventStoreRepository {
 ### 4.1 AddReviewService の修正
 
 ```diff ts:CatalogService/src/Application/Review/AddReviewService/AddReviewService.ts
-+ import { Review } from "Domain/models/Review/Review";
 - import { IReviewRepository } from "Domain/models/Review/IReviewRepository";
   (省略)
 
