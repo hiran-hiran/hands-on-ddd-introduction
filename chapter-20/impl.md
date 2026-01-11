@@ -252,7 +252,7 @@ export class SQLEventStoreRepository implements IEventStoreRepository {
 
 ### 3.3 DI コンテナーへの登録
 
-実装したリポジトリを DI コンテナーに登録しましょう。
+実装した `SQLEventStoreRepository` を `IEventStoreRepository` インターフェースの実装として DI コンテナーに登録します。
 
 ```typescript:CatalogService/src/Program.ts
 import { container } from 'tsyringe';
@@ -729,7 +729,7 @@ $ curl -X POST -H "Content-Type: application/json" \
 
 また、5 秒後にポーリングが実行され、イベントが発行されることも確認できます。
 
-## まとめ
+## まとめ z
 
 以上で Outbox パターンの実装は完了です。この実装により、以下のような利点が得られました。
 
