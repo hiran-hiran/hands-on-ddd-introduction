@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Read",
+      "mcp__acp__Read"
+    ],
+    "deny": [
+      "Bash(rm *)",
+      "Bash(rmdir *)",
+      "mcp__acp__Bash(rm *)",
+      "mcp__acp__Bash(rmdir *)"
+    ]
+  }
+}
