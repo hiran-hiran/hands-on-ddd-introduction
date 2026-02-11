@@ -5,5 +5,7 @@ module.exports = {
   maxWorkers: 1,
   roots: ["<rootDir>/src"],
   moduleDirectories: ["node_modules", "src"],
-  transformIgnorePatterns: ["/node_modules/(?!nanoid)"],
+  moduleNameMapper: {
+    "^nanoid$": "<rootDir>/src/__mocks__/nanoid.ts",
+  },
 };
